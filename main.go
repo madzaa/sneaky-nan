@@ -1,26 +1,31 @@
 package main
 
-import "log"
+import (
+    "encoding/binary"
+    "fmt"
+    "math"
+)
 
 func main() {
-	conceal("hello")
+    msg := "hi🥰"
+    fmt.Println(conceal(msg))
+    fmt.Println(reveal(conceal(msg)))
 }
 
-func conceal(message string) {
-	var nan uint64 = 0x7FF8000000000001
-	b := []byte(message)
-	for i, b2 := range b {
-		nan |= (uint64(b2) << uint64(i*3))
-	}
-	log.Printf("%x", nan)
-	//binary.Read(&r, binary.BigEndian, message)
+func conceal(message string) float64 {
+    messageToBytes := []byte(message)
+    var nan uint64 = 0x7FF0000000000000
+    newNan := nan | uint64(len(messageToBytes)<<48)
 
+    for i, toByte := range messageToBytes {
+        newNan |= (uint64(toByte)) << (40 - i*8)
+    }
+    return math.Float64frombits(newNan)
 }
 
-//0001
-//0.001 2x3
-//0b010000001000110000000000000000000
-//00110000000000000000000 = 0.625
-//1.27
-// 0001
-// 0.25 = 0.0100011
+func reveal(nan float64) string {
+    var floatToBits = math.Float64bits(nan)
+    byteArray := make([]byte, 8)
+    binary.BigEndian.PutUint64(byteArray, floatToBits)
+    return string(byteArray[2:])
+}
